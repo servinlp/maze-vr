@@ -1,0 +1,16 @@
+body{
+  margin: 0;
+  padding: 0;
+}
+canvas{
+  display: block;
+}
+.fps{
+  position: fixed;
+  top: 1em;
+  right: 1em;
+  font-size: .5em;
+  color: #fff;
+  font-family: Tahoma, Geneva, sans-serif;
+  margin: 0;
+}
