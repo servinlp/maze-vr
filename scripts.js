@@ -1,37 +1,19 @@
 /* global THREE, WEBVR, Stats */
 
-WEBVR.checkAvailability().catch( message => {
-
-    console.log( message )
-
-})
-
 const scene = new THREE.Scene(),
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 ),
     renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true }),
     light = new THREE.HemisphereLight( 0xffffff, 0x080820, 1 ),
     raycaster = new THREE.Raycaster(),
-    // mouse = new THREE.Vector2(),
-    // camVec = new THREE.Vector3(),
-    // element = renderer.domElement,
-    // mousePos = [0, 0],
-    // p = document.querySelectorAll(".fps")[0],
-    // fps = 0,
-    // map = {},
-    // velocity = 0,
-    // collisionPosibilities = [],
     triggers = [false, false]
 
-    // effect = new THREE.StereoEffect(renderer),
 let controls,
-    effect,
     controller1,
     controller2,
     loader,
     rayLine,
     line,
     vec,
-    // wallObjects,
     footing,
     geometry,
     material,
@@ -39,17 +21,7 @@ let controls,
     WALL,
     subWALL,
     num,
-    // keyMap,
-    // lastRun,
-    // delta,
-    // baseView,
-    // x,
-    // i,
-    // curPos,
-    // camBox,
-    // ray,
     collisionResults,
-    // collisionResultsMaze,
     newCamPos
 
 renderer.setSize( window.innerWidth, window.innerHeight )
@@ -162,13 +134,12 @@ const base = {
         WALL.rotation.y = ( Math.PI / 360 ) * 180
         WALL.translateX( -( this.block().size[0] / 3 ) )
         subWALL.add( WALL )
-        // collisionPosibilities.push(WALL)
 
         geometry = new THREE.BoxGeometry( this.wallSize()[0], this.wallSize()[1], this.wallSize()[2] )
         WALL = new THREE.Mesh( geometry, material )
         WALL.rotation.y = Math.PI / 360
         subWALL.add( WALL )
-        // collisionPosibilities.push(WALL)
+
         subWALL.translateX( i % this.tile[0] )
         subWALL.translateZ( Math.floor( i / this.tile[0] ) )
         subWALL.rotation.y = -( Math.PI / 2 ) * ( num - 5 )
@@ -185,14 +156,12 @@ const base = {
         WALL = new THREE.Mesh( geometry, material )
         WALL.translateX( this.wallSize()[0] / 6 )
         subWALL.add( WALL )
-        // collisionPosibilities.push(WALL)
 
         WALL = new THREE.Mesh( geometry, material )
         // WALL.translateX(this.wallSize()[0]/6)
         WALL.translateZ( this.wallSize()[0] / 6 )
         WALL.rotation.y = ( Math.PI / 360 ) * 180
         subWALL.add( WALL )
-        // collisionPosibilities.push(WALL)
 
         subWALL.translateX( i % this.tile[0] )
         subWALL.translateZ( Math.floor( i / this.tile[0] ) )
@@ -228,14 +197,6 @@ init()
 
 function init() {
 
-    // var gridHelper = new THREE.GridHelper(20, 1)
-    // geometry = new THREE.BoxGeometry(1, 1, 1)
-    // material = new THREE.MeshPhongMaterial({wireframe: true})
-    // camBox = new THREE.Mesh(geometry, material)
-    // camBox.position.y = -1
-    // camBox.position.x = -base.mazeStart[0]
-    // scene.add(camBox)
-
     base.render()
 
     base.container.translateY( 0.5 )
@@ -257,28 +218,12 @@ function init() {
 
     setLight( [-20, 20, -30], 0xffffff, 0.5, base.container, true )
 
-    // var boundingBoxHelper = new THREE.BoundingBoxHelper(base.obj, 0xff0000)
-    // boundingBoxHelper.update()
-    // scene.add(boundingBoxHelper)
-
-    // scene.add(gridHelper)
     scene.add( base.container )
 
-    // base.container.position.z = 0
-    // base.container.position.x = 0
-    // base.container.position.y = 5
-
-    // geometry = new THREE.BoxGeometry(1, 1, 1)
-    // material = new THREE.MeshPhongMaterial({color : 0xffff00, wireframe: true})
-    // box = new THREE.Mesh(geometry, material)
-    // box.position.z = -1
-    // box.position.y = 1
-    // scene.add(box)
     // VR
     controls = new THREE.VRControls( camera )
     controls.standing = true
     console.log( controls )
-    // console.log(camera)
 
     controller1 = new THREE.ViveController( 0 )
     controller2 = new THREE.ViveController( 1 )
@@ -306,23 +251,33 @@ function init() {
         controller1.add( object.clone() )
         controller2.add( object.clone() )
 
-        // console.log(controller1)
-        // console.log(controller2)
-
         setRayLine( controller1 )
         setRayLine( controller2 )
 
-        loop()
+        animate()
 
     })
 
+    WEBVR.checkAvailability()
+        .then( () => {
 
-    effect = new THREE.VREffect( renderer )
-    if ( WEBVR.isAvailable() === true ) {
+            WEBVR.getVRDisplay( display => {
 
-        document.body.appendChild( WEBVR.getButton( effect ) )
+                console.log( display )
 
-    }
+                renderer.vr.enabled = true
+                renderer.vr.setDevice( display )
+
+                document.body.appendChild( WEBVR.getButton( display, renderer.domElement ) )
+
+            })
+
+        })
+        .catch( message => {
+
+            console.log( message )
+
+        })
 
     window.addEventListener( 'resize', onWindowResize, false )
 
@@ -333,14 +288,13 @@ function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight
     camera.updateProjectionMatrix()
 
-    effect.setSize( window.innerWidth, window.innerHeight )
+    renderer.setSize( window.innerWidth, window.innerHeight )
 
 }
 
-function loop() {
+function animate() {
 
-    effect.requestAnimationFrame( loop )
-    render()
+    renderer.animate( render )
 
 }
 
@@ -352,9 +306,6 @@ function render() {
 
     if ( controller1.getButtonState( 'trigger' ) ) {
 
-        console.log( controller1 )
-        console.log( controller1.children[1] )
-        // controller1.getGamepad().hapticActuators[0].pulse(controller1.getGamepad().buttons[1].value, 100)
         controller1.children[1].material.opacity = 1
 
     } else {
@@ -368,12 +319,6 @@ function render() {
         controller1.getGamepad().hapticActuators[0].pulse( controller1.getGamepad().buttons[0].value, 100 )
 
     }
-    // if (controller1.getButtonState("grips")) {
-    //  controller1.getGamepad().hapticActuators[0].pulse(controller1.getGamepad().buttons[2].value, 100)
-    // }
-    // if (controller1.getButtonState("menu")) {
-    //  controller1.getGamepad().hapticActuators[0].pulse(controller1.getGamepad().buttons[3].value, 100)
-    // }
 
     if ( controller2.getButtonState( 'trigger' ) ) {
 
@@ -385,26 +330,13 @@ function render() {
         vec[1].applyMatrix4( line.matrixWorld )
         line.material.opacity = 1
 
-        console.log( base.container.children[0] )
-        // var ray = new THREE.Ray(vec[0], vec[1])
         raycaster.set( vec[0], vec[1] )
-        // collisionResults = raycaster.intersectObjects([base.container.children[0], base.container.children[1]], true)
 
         collisionResults = raycaster.intersectObject( base.container.children[0], true )
 
-        // collisionResultsMaze = raycaster.intersectObjects(base.obj.children, true)
-
-        // collisionResults = ray.intersectBox(base.container.children[0])
-        // console.log(raycaster)
-        // console.log(collisionResults)
-        // if (collisionResultsMaze.length > 0) {
-        //  line.material.color.set(0xff0000)
-        // } else
         if ( collisionResults.length > 0 ) {
 
             line.material.color.set( 0x00ff00 )
-            // triggers[1] = true
-            // newCamPos = collisionResults[0].point
 
         } else {
 
@@ -430,7 +362,7 @@ function render() {
 
     controls.update()
 
-    effect.render( scene, camera )
+    renderer.render( scene, camera )
 
 }
 
@@ -457,7 +389,7 @@ const stats = new Stats()
 stats.showPanel( 0 ) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild( stats.dom )
 
-function animate() {
+function statsAnimate() {
 
     stats.begin()
 
@@ -465,11 +397,11 @@ function animate() {
 
     stats.end()
 
-    requestAnimationFrame( animate )
+    requestAnimationFrame( statsAnimate )
 
 }
 
-requestAnimationFrame( animate )
+requestAnimationFrame( statsAnimate )
 
 function setRayLine( controller ) {
 
