@@ -189,3 +189,5 @@ const WEBVR = {
     }
 
 }
+
+export default WEBVR

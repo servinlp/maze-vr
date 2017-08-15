@@ -168,4 +168,24 @@ Stats.Panel = function ( name, fg, bg ) {
 
 };
 
-// export { Stats as default };
+export function statsInit() {
+
+    const stats = new Stats()
+    stats.showPanel( 0 ) // 0: fps, 1: ms, 2: mb, 3+: custom
+    document.body.appendChild( stats.dom )
+
+    function animate() {
+
+        stats.begin()
+
+        stats.end()
+
+        requestAnimationFrame( animate )
+
+    }
+
+    requestAnimationFrame( animate )
+
+}
+
+export default Stats
